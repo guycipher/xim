@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=v0.8.9
+VERSION=v0.8.0
 
 echo "Bundling xim $VERSION"
 
