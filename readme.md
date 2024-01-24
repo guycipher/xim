@@ -2,7 +2,7 @@
 
 xim is a multi-platform scheduler that supports standard cron expressions with six fields: Minute, Hour, Day of Month, Month, Day of Week, and Command.
 
-xim handles non-standard expressions such as `@hourly,` `@daily,` `@weekly,` `@monthly,` `@yearly,` `@annually,` and `@reboot.`
+xim handles non-standard expressions such as `@hourly` `@daily` `@weekly` `@monthly` `@yearly` `@annually` and `@reboot`
 
 ### ✨ Features
 ⭐ Provides detailed error handling for invalid cron expressions, ensuring that the parser returns meaningful error messages for easier debugging.
