@@ -21,8 +21,6 @@ xim handles non-standard expressions such as `@hourly` `@daily` `@weekly` `@mont
 
 ⭐ Calculates the next scheduled time efficiently, considering the specific cron expression fields.
 
-⭐ Allows for extension or modification based on specific use cases or additional features.
-
 ### 📝 ximtab
 is the ximtable that contains all your jobs.
 ```
