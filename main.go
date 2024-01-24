@@ -30,31 +30,36 @@ import (
 	cronparser "xim/cron"
 )
 
+// Job is the cron job structure
 type Job struct {
-	Entry      string `yaml:"entry"`
-	stopSignal chan struct{}
+	Entry      string         `yaml:"entry"` // entry is the cron and command
+	stopSignal chan os.Signal // Stop signal for job
 }
 
+// Cron is the scheduler structure
 type Cron struct {
-	jobs     []*Job
-	mu       sync.Mutex
-	stopChan chan os.Signal
+	jobs     []*Job         // Scheduler has many jobs
+	mu       sync.Mutex     // Mutex
+	stopChan chan os.Signal // Stop channel
 }
 
+// NewCron initialize a new cron scheduler
 func NewCron() *Cron {
 	return &Cron{
 		stopChan: make(chan os.Signal, 1),
 	}
 }
 
+// AddJob add job to schedler
 func (c *Cron) AddJob(job *Job) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	job.stopSignal = make(chan struct{})
+	job.stopSignal = make(chan os.Signal)
 	c.jobs = append(c.jobs, job)
 }
 
+// Start starts scheduler
 func (c *Cron) Start() {
 	for _, job := range c.jobs {
 		go func(job *Job) {
@@ -85,10 +90,12 @@ func (c *Cron) Start() {
 	}
 }
 
+// Stops scheduler
 func (c *Cron) Stop() {
 	c.stopChan <- syscall.SIGTERM
 }
 
+// WaitAndSaveJobsOnShutdown gracefully shutsdown
 func (c *Cron) WaitAndSaveJobsOnShutdown() {
 	signal.Notify(c.stopChan, os.Interrupt, syscall.SIGTERM)
 
@@ -96,14 +103,13 @@ func (c *Cron) WaitAndSaveJobsOnShutdown() {
 	<-c.stopChan
 
 	// Save jobs to YAML file on shutdown
-	if err := saveJobs(c.jobs); err != nil {
+	if err := saveJobs(c.jobs, "ximtab"); err != nil {
 		fmt.Printf("Error saving jobs: %v\n", err)
 	}
 
-	fmt.Println("xim stopped.")
-	os.Exit(0)
 }
 
+// program starts here
 func main() {
 	cron := NewCron()
 
@@ -125,6 +131,7 @@ func main() {
 	cron.WaitAndSaveJobsOnShutdown()
 }
 
+// executeCommand runs a new command
 func executeCommand(command string) error {
 	fmt.Printf("Executing command: %s\n", command)
 
@@ -135,15 +142,14 @@ func executeCommand(command string) error {
 	//fmt.Println(string(output))
 
 	go func() {
-		log.Println("running")
 		cmd := exec.Command(strings.Split(command, " ")[0], strings.Split(command, " ")[1:]...)
 		cmd.Start()
 		cmd.Wait()
-		log.Println("done")
 	}()
 	return nil
 }
 
+// loadJobs loads jobs from table
 func loadJobs(filename string) ([]*Job, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -155,14 +161,15 @@ func loadJobs(filename string) ([]*Job, error) {
 	for _, j := range strings.Split(string(data), "\n") {
 		jobs = append(jobs, &Job{
 			Entry:      strings.TrimSpace(j),
-			stopSignal: make(chan struct{}),
+			stopSignal: make(chan os.Signal),
 		})
 	}
 
 	return jobs, nil
 }
 
-func saveJobs(jobs []*Job) error {
+// loadJobs loads jobs to table
+func saveJobs(jobs []*Job, filename string) error {
 	var data string
 
 	for i, j := range jobs {
@@ -173,7 +180,7 @@ func saveJobs(jobs []*Job) error {
 		data += fmt.Sprintf("%s\n", j.Entry)
 	}
 
-	err := os.WriteFile("ximtab", []byte(data), 0644)
+	err := os.WriteFile(filename, []byte(data), 0644)
 	if err != nil {
 		return err
 	}
