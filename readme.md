@@ -29,3 +29,9 @@ is the ximtable that contains all your jobs.
 * * * * * echo hello world
 */15 0 1,12 * 1-5 echo hello world again
 ```
+
+## Building
+For all available platforms
+```
+./bundler.sh
+```
